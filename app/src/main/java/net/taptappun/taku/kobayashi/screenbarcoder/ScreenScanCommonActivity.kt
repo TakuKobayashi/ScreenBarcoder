@@ -19,7 +19,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import net.taptappun.taku.kobayashi.screenbarcoder.databinding.ActivityMainBinding
 
-abstract class BasicCommonActivity : AppCompatActivity() {
+abstract class ScreenScanCommonActivity : AppCompatActivity() {
+
     // 参考:
     // https://buildersbox.corp-sansan.com/entry/2020/05/27/110000
     // https://qiita.com/yass97/items/62cccfad5190cc4d4fa6

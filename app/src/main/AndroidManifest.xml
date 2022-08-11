@@ -5,6 +5,11 @@
 
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <application
         android:allowBackup="true"
@@ -17,6 +22,10 @@
         android:theme="@style/Theme.ScreenBarcoder"
         tools:targetApi="31"
         android:banner="@drawable/app_icon_your_company">
+
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode,ocr,face,ica,custom_ica,barcode_ui" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -36,6 +45,14 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
+        </activity>
+
+        <activity
+            android:name=".CameraScanActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.View" />
+            </intent-filter>
         </activity>
     </application>
 

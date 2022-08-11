@@ -1,6 +1,5 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.*
 import android.content.ContentValues
@@ -47,12 +46,12 @@ class ScreenRecordService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        Log.d(BasicCommonActivity.TAG, "onBind")
+        Log.d(ScreenScanCommonActivity.TAG, "onBind")
         return null
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.d(BasicCommonActivity.TAG, "onStartCommand")
+        Log.d(ScreenScanCommonActivity.TAG, "onStartCommand")
         //通知を出す。
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notificationBuilder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -204,15 +203,15 @@ class ScreenRecordService : Service() {
                 //imageReader.surface,
                 object : VirtualDisplay.Callback() {
                     override fun onPaused() {
-                        Log.d(BasicCommonActivity.TAG, "VirtualDisplay onPaused")
+                        Log.d(ScreenScanCommonActivity.TAG, "VirtualDisplay onPaused")
                     }
 
                     override fun onResumed(){
-                        Log.d(BasicCommonActivity.TAG, "VirtualDisplay onResumed")
+                        Log.d(ScreenScanCommonActivity.TAG, "VirtualDisplay onResumed")
                     }
 
                     override fun onStopped(){
-                        Log.d(BasicCommonActivity.TAG, "VirtualDisplay onStopped")
+                        Log.d(ScreenScanCommonActivity.TAG, "VirtualDisplay onStopped")
                     }
                  },
                 null
@@ -235,9 +234,9 @@ class ScreenRecordService : Service() {
 
     private val imageReaderListener = ImageReader.OnImageAvailableListener { reader: ImageReader ->
         val image = reader.acquireLatestImage()
-        Log.d(BasicCommonActivity.TAG, "width:${image.width} height:${image.height} planeSize:${image.planes.size}")
+        Log.d(ScreenScanCommonActivity.TAG, "width:${image.width} height:${image.height} planeSize:${image.planes.size}")
         for(imagePlane in image.planes) {
-            Log.d(BasicCommonActivity.TAG, "rowStride:${imagePlane.rowStride} pixelStride:${imagePlane.pixelStride}")
+            Log.d(ScreenScanCommonActivity.TAG, "rowStride:${imagePlane.rowStride} pixelStride:${imagePlane.pixelStride}")
         }
         /*
         val planes = image.planes
@@ -285,7 +284,7 @@ class ScreenRecordService : Service() {
     //Service終了と同時に録画終了
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(BasicCommonActivity.TAG, "onDestroy")
+        Log.d(ScreenScanCommonActivity.TAG, "onDestroy")
         if (Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this)){
             windowManager.removeView(overlayView);
         }
