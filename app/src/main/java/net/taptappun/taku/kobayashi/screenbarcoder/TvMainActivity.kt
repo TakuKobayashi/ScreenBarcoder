@@ -5,14 +5,8 @@ import android.os.Bundle
 import android.widget.TextView
 import net.taptappun.taku.kobayashi.screenbarcoder.databinding.ActivityMainBinding
 
-class TvMainActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityMainBinding
-
+class TvMainActivity : BasicCommonActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
     }
 }
