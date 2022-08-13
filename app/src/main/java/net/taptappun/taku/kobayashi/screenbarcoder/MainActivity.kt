@@ -4,13 +4,8 @@ import android.Manifest
 import android.app.Service
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import android.widget.Button
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import net.taptappun.taku.kobayashi.screenbarcoder.databinding.ActivityMainBinding
 
 class MainActivity : ScreenScanCommonActivity() {
@@ -35,7 +30,6 @@ class MainActivity : ScreenScanCommonActivity() {
                     mediaProjectionStartActivityForResult.launch(mediaProjectionManager.createScreenCaptureIntent())
                 }
             }
-
         }
 
         val recordStopButton = binding.recordStopButton
@@ -63,7 +57,6 @@ class MainActivity : ScreenScanCommonActivity() {
      * which is packaged with this application.
      */
     external fun stringFromJNI(): String
-
 
     companion object {
         // Used to load the 'screenbarcoder' library on application startup.

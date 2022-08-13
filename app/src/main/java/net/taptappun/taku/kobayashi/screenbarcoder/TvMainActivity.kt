@@ -4,14 +4,8 @@ import android.Manifest
 import android.app.Service
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import android.widget.Button
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import net.taptappun.taku.kobayashi.screenbarcoder.databinding.ActivityMainBinding
 import net.taptappun.taku.kobayashi.screenbarcoder.databinding.TvactivityMainBinding
 
 class TvMainActivity : ScreenScanCommonActivity() {
@@ -36,7 +30,6 @@ class TvMainActivity : ScreenScanCommonActivity() {
                     mediaProjectionStartActivityForResult.launch(mediaProjectionManager.createScreenCaptureIntent())
                 }
             }
-
         }
 
         val recordStopButton = binding.recordStopButtonTV

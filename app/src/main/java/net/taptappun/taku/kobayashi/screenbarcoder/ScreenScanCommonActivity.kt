@@ -25,14 +25,15 @@ abstract class ScreenScanCommonActivity : AppCompatActivity() {
     // onResume寄りまで定義しないとこんな感じのエラーがでてしまう
     // LifecycleOwner is attempting to register while current state is RESUMED. LifecycleOwners must call register before they are STARTED.
     protected val mediaProjectionStartActivityForResult = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) {
-            result: ActivityResult ->
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             val intent = Intent(this, ScreenRecordService::class.java)
-            intent.putExtra("code", result.resultCode) //必要なのは結果。startActivityForResultのrequestCodeではない。
+            intent.putExtra("code", result.resultCode) // 必要なのは結果。startActivityForResultのrequestCodeではない。
             intent.putExtra("data", result.data)
-            //画面の大きさも一緒に入れる
-            val metrics = resources.displayMetrics;
+            // 画面の大きさも一緒に入れる
+            val metrics = resources.displayMetrics
             intent.putExtra("height", metrics.heightPixels)
             intent.putExtra("width", metrics.widthPixels)
             intent.putExtra("dpi", metrics.densityDpi)
@@ -40,7 +41,7 @@ abstract class ScreenScanCommonActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(intent)
             } else {
-                startService(intent);
+                startService(intent)
             }
         }
     }
@@ -50,12 +51,15 @@ abstract class ScreenScanCommonActivity : AppCompatActivity() {
             if (Settings.canDrawOverlays(this)) {
                 canDrawOverlayCallback?.invoke()
             }
-        }else{
+        } else {
             canDrawOverlayCallback?.invoke()
         }
     }
 
-    protected fun checkAndRequestPermissions(permissionNames: Array<String>, permissionAllGrantedCallback: (permissionNames: Array<String>) -> Unit){
+    protected fun checkAndRequestPermissions(
+        permissionNames: Array<String>,
+        permissionAllGrantedCallback: (permissionNames: Array<String>) -> Unit
+    ) {
         requestPermissionNamesStash.clear()
         if (permissionsGranted(permissionNames)) {
             permissionAllGrantedCallback(permissionNames)
@@ -79,7 +83,7 @@ abstract class ScreenScanCommonActivity : AppCompatActivity() {
         requestCode: Int,
         permissions: Array<String>,
         grantResults:
-        IntArray
+            IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
@@ -110,9 +114,9 @@ abstract class ScreenScanCommonActivity : AppCompatActivity() {
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:${this.packageName}")
-                );
+                )
                 // 設定画面に移行
-                settingsStartActivityForResult.launch(intent);
+                settingsStartActivityForResult.launch(intent)
             }
         }
     }
