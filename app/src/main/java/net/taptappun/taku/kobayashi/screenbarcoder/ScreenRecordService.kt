@@ -1,7 +1,11 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.annotation.SuppressLint
-import android.app.*
+import android.app.Activity
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent

@@ -46,7 +46,7 @@ abstract class ScreenScanCommonActivity : AppCompatActivity() {
         }
     }
 
-    private val settingsStartActivityForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+    private val settingsStartActivityForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (Settings.canDrawOverlays(this)) {
                 canDrawOverlayCallback?.invoke()

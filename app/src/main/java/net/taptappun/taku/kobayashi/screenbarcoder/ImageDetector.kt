@@ -6,7 +6,7 @@ import android.util.Size
 import com.google.mlkit.vision.common.InputImage
 
 abstract class ImageDetector<T> {
-    private var markingBitmap: Bitmap? = null
+    protected var markingBitmap: Bitmap? = null
 
     fun release() {
         if (markingBitmap != null) {
