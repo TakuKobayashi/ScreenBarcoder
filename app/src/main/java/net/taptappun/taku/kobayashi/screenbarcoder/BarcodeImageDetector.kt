@@ -1,5 +1,8 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.util.Log
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -24,7 +27,7 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
         // Or, to specify the formats to recognize:
 //        val scanner = BarcodeScanning.getClient(options)
         // [END get_detector]
-
+        Log.d(ScreenScanCommonActivity.TAG, "lets Scan!!")
         // [START run_detector]
         scanner.process(image).addOnSuccessListener { barcodes -> renderDetectMarks(barcodes) }.addOnFailureListener { e ->
             // Task failed with an exception
@@ -32,16 +35,23 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
     }
 
     override fun renderDetectMarks(detects: MutableList<Barcode>) {
+        Log.d(ScreenScanCommonActivity.TAG, "scan!!")
+        refreshRenderMarkedCanvas()
         // Task completed successfully
         // [START_EXCLUDE]
         // [START get_barcodes]
+        val markingCanvas = if (markingBitmap != null && markingBitmap!!.isRecycled) {
+            Canvas(markingBitmap!!)
+        } else {
+            null
+        }
+
         for (barcode in detects) {
             val bounds = barcode.boundingBox
             val corners = barcode.cornerPoints
             val rawValue = barcode.rawValue
             val valueType = barcode.valueType
             Log.d(ScreenScanCommonActivity.TAG, "barCodeBounds:$bounds barCodeRawValue:$rawValue barcodeValueType:$valueType barcodeCornersCount:$corners")
-            // See API reference for complete list of supported types
             when (valueType) {
                 Barcode.TYPE_WIFI -> {
                     val ssid = barcode.wifi!!.ssid
@@ -54,8 +64,36 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
                     Log.d(ScreenScanCommonActivity.TAG, "barCodeTitle:$title barCodeUrl:$url")
                 }
             }
+            renderMarkings(markingCanvas, barcode)
         }
         // [END get_barcodes]
         // [END_EXCLUDE]
+    }
+
+    private fun renderMarkings(markingRenderCanvas: Canvas?, barcode: Barcode) {
+        val bounds = barcode.boundingBox
+        val corners = barcode.cornerPoints
+        val rawValue = barcode.rawValue
+        if (bounds != null) {
+            val barcodeRectPaint = Paint()
+            // #66cdaa: mediumaquamarine
+            barcodeRectPaint.color = Color.rgb(102, 205, 170)
+            markingRenderCanvas?.drawRect(bounds, barcodeRectPaint)
+        }
+
+        if (corners != null) {
+            val barcodeCornersPaint = Paint()
+            // #ff8c00: darkorange
+            barcodeCornersPaint.color = Color.rgb(255, 140, 0)
+            for (corner in corners) {
+                markingRenderCanvas?.drawCircle(corner.x.toFloat(), corner.y.toFloat(), 3f, barcodeCornersPaint)
+            }
+        }
+
+        if (bounds != null && rawValue != null) {
+            val textPaint = Paint()
+            textPaint.color = Color.BLACK
+            markingRenderCanvas?.drawText(rawValue, bounds.centerX().toFloat(), bounds.bottom.toFloat(), textPaint)
+        }
     }
 }

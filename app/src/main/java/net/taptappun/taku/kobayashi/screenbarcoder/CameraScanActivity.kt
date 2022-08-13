@@ -1,41 +1,40 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.pm.PackageManager
+import android.graphics.Paint
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
 import android.view.SurfaceHolder
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.common.InputImage
-import net.taptappun.taku.kobayashi.screenbarcoder.databinding.ActivityCameraScanBinding
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import net.taptappun.taku.kobayashi.screenbarcoder.databinding.ActivityCameraScanBinding
 
 class CameraScanActivity : AppCompatActivity() {
 
     private val imageAnalysisExecutor: ExecutorService by lazy {
         Executors.newSingleThreadExecutor()
     }
-    private val surfaceViewExecutor: ExecutorService by lazy {
-        Executors.newSingleThreadExecutor()
-    }
     private val detectors = setOf(
         BarcodeImageDetector(),
     )
+    private var surfaceViewThread: Thread? = null
+    private var isSurfaceRendering = false
+    private var surfaceHolder: SurfaceHolder? = null
     private lateinit var binding: ActivityCameraScanBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +46,8 @@ class CameraScanActivity : AppCompatActivity() {
         val holder = binding.overlaySurfaceView.holder
         holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
+                surfaceHolder = holder
+                startRenderThread()
                 startCamera()
             }
 
@@ -56,30 +57,71 @@ class CameraScanActivity : AppCompatActivity() {
                 width: Int,
                 height: Int
             ) {
+                surfaceHolder = holder
+                startRenderThread()
                 startCamera()
+                for (detector in detectors) {
+                    detector.initRenderBitmap(Size(width, height))
+                }
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder) {
                 unbindAllCamera()
+                for (detector in detectors) {
+                    detector.release()
+                }
+                isSurfaceRendering = false
+                surfaceViewThread = null
             }
         })
     }
 
+    private fun startRenderThread() {
+        isSurfaceRendering = true
+        if (surfaceViewThread != null) {
+            return
+        }
+        surfaceViewThread = Thread {
+            while (isSurfaceRendering) {
+                Log.d(ScreenScanCommonActivity.TAG, "Surface!!")
+                val canvas = surfaceHolder?.lockCanvas()
+                if (canvas != null) {
+                    for (detector in detectors) {
+                        val paint = Paint()
+                        val renderMarkedBitmap = detector.renderMarkedBitmap()
+                        if (renderMarkedBitmap != null) {
+                            canvas.drawBitmap(renderMarkedBitmap, 0f, 0f, paint)
+                        }
+                    }
+                    surfaceHolder?.unlockCanvasAndPost(canvas)
+                }
+            }
+        }
+        surfaceViewThread?.start()
+    }
+
     override fun onResume() {
         super.onResume()
+        isSurfaceRendering = true
+        startRenderThread()
         startCamera()
     }
 
     override fun onPause() {
         super.onPause()
+        isSurfaceRendering = false
+        surfaceViewThread = null
         unbindAllCamera()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        isSurfaceRendering = false
+        surfaceViewThread = null
         for (detector in detectors) {
             detector.release()
         }
+        releaseCamera()
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -102,6 +144,7 @@ class CameraScanActivity : AppCompatActivity() {
             imageAnalysis.setAnalyzer(
                 imageAnalysisExecutor,
                 ImageAnalysis.Analyzer { imageProxy ->
+                    Log.d(ScreenScanCommonActivity.TAG, "image!!")
                     val mediaImage = imageProxy.image
                     if (mediaImage != null) {
                         val image = InputImage.fromMediaImage(
@@ -128,57 +171,65 @@ class CameraScanActivity : AppCompatActivity() {
                 imageAnalysis
             )
         }, ContextCompat.getMainExecutor(this))
-    }
+        }
 
-    private fun unbindAllCamera(){
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-        cameraProvider.unbindAll()
-        cameraProviderFuture.cancel(true)
-    }
+        private fun unbindAllCamera() {
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+            cameraProvider.unbindAll()
+            cameraProviderFuture.cancel(true)
+        }
 
-    /**
-     * Get the angle by which an image must be rotated given the device's current
-     * orientation.
-     */
-    @Throws(CameraAccessException::class)
-    private fun getRotationCompensation(
-        cameraId: String,
-        activity: Activity,
-        isFrontFacing: Boolean
-    ): Int {
-        val orientations = SparseIntArray()
-        orientations.append(Surface.ROTATION_0, 0)
-        orientations.append(Surface.ROTATION_90, 90)
-        orientations.append(Surface.ROTATION_180, 180)
-        orientations.append(Surface.ROTATION_270, 270)
-        // Get the device's current rotation relative to its "native" orientation.
-        // Then, from the ORIENTATIONS table, look up the angle the image must be
-        // rotated to compensate for the device's rotation.
-        val deviceRotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (this.display == null) {
-                0
+        @SuppressLint("RestrictedApi")
+        private fun releaseCamera() {
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+            cameraProvider.unbindAll()
+            cameraProviderFuture.cancel(true)
+            cameraProvider.shutdown()
+        }
+
+        /**
+         * Get the angle by which an image must be rotated given the device's current
+         * orientation.
+         */
+        @Throws(CameraAccessException::class)
+        private fun getRotationCompensation(
+            cameraId: String,
+            activity: Activity,
+            isFrontFacing: Boolean
+        ): Int {
+            val orientations = SparseIntArray()
+            orientations.append(Surface.ROTATION_0, 0)
+            orientations.append(Surface.ROTATION_90, 90)
+            orientations.append(Surface.ROTATION_180, 180)
+            orientations.append(Surface.ROTATION_270, 270)
+            // Get the device's current rotation relative to its "native" orientation.
+            // Then, from the ORIENTATIONS table, look up the angle the image must be
+            // rotated to compensate for the device's rotation.
+            val deviceRotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (this.display == null) {
+                    0
+                } else {
+                    this.display!!.rotation
+                }
             } else {
-                this.display!!.rotation
+                this.windowManager.defaultDisplay.rotation
             }
-        } else {
-            this.windowManager.defaultDisplay.rotation
-        }
-        var rotationCompensation = orientations.get(deviceRotation)
+            var rotationCompensation = orientations.get(deviceRotation)
 
-        // Get the device's sensor orientation.
-        val cameraManager = activity.getSystemService(CAMERA_SERVICE) as CameraManager
-        val sensorOrientation = cameraManager
-            .getCameraCharacteristics(cameraId)
-            .get(CameraCharacteristics.SENSOR_ORIENTATION)!!
+            // Get the device's sensor orientation.
+            val cameraManager = activity.getSystemService(CAMERA_SERVICE) as CameraManager
+            val sensorOrientation = cameraManager
+                .getCameraCharacteristics(cameraId)
+                .get(CameraCharacteristics.SENSOR_ORIENTATION)!!
 
-        if (isFrontFacing) {
-            rotationCompensation = (sensorOrientation + rotationCompensation) % 360
-        } else { // back-facing
-            rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360
+            if (isFrontFacing) {
+                rotationCompensation = (sensorOrientation + rotationCompensation) % 360
+            } else { // back-facing
+                rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360
+            }
+            return rotationCompensation
         }
-        return rotationCompensation
     }
-}
-
     
