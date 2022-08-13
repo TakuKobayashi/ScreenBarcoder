@@ -194,7 +194,6 @@ class CameraScanActivity : AppCompatActivity() {
         }
 
     companion object {
-        public const val TAG = "AndroidScreenBarcoder"
         private const val REQUEST_CODE_PERMISSIONS = 10
         // 必要なpermissionのリスト
         private val REQUIRED_PERMISSIONS =

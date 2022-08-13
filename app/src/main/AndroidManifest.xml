@@ -54,6 +54,10 @@
                 <action android:name="android.intent.action.View" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".ScreenRecordService"
+            android:foregroundServiceType="mediaProjection"
+            />
     </application>
 
 </manifest>
