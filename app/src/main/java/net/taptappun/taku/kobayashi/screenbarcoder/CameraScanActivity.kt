@@ -47,6 +47,7 @@ class CameraScanActivity : AppCompatActivity() {
         val holder = binding.overlaySurfaceView.holder
         holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
+                startCamera()
             }
 
             override fun surfaceChanged(
@@ -55,12 +56,23 @@ class CameraScanActivity : AppCompatActivity() {
                 width: Int,
                 height: Int
             ) {
+                startCamera()
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder) {
+                unbindAllCamera()
             }
         })
+    }
+
+    override fun onResume() {
+        super.onResume()
         startCamera()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unbindAllCamera()
     }
 
     override fun onDestroy() {
@@ -99,10 +111,7 @@ class CameraScanActivity : AppCompatActivity() {
                         for (detector in detectors) {
                             detector.detect(image)
                         }
-                        // Pass image to an ML Kit Vision API
                     }
-                    // insert your code here.
-                    // after done, release the ImageProxy object
                     imageProxy.close()
                 }
             )
@@ -119,6 +128,13 @@ class CameraScanActivity : AppCompatActivity() {
                 imageAnalysis
             )
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun unbindAllCamera(){
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+        cameraProvider.unbindAll()
+        cameraProviderFuture.cancel(true)
     }
 
     /**

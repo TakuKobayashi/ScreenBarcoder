@@ -26,7 +26,7 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
         // [END get_detector]
 
         // [START run_detector]
-        scanner.process(image).addOnSuccessListener { barcodes -> renderDetectMarks(barcodes) }.addOnFailureListener {
+        scanner.process(image).addOnSuccessListener { barcodes -> renderDetectMarks(barcodes) }.addOnFailureListener { e ->
             // Task failed with an exception
         }
     }
