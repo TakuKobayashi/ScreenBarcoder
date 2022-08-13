@@ -44,37 +44,18 @@ class MainActivity : ScreenScanCommonActivity() {
             stopService(intent)
         }
 
-        /*
-                private val REQUIRED_PERMISSIONS =
-            mutableListOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO
-            ).apply {
-                // WRITE_EXTERNAL_STORAGEはPie以下で必要
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                    add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
-            }.toTypedArray()
-         */
-
-        /*
-        // 参考: https://stackoverflow.com/questions/39911377/settings-candrawoverlays-for-api-23
-        if (Build.VERSION.SDK_INT >= 23){
-            if(Settings.canDrawOverlays(this)){
-                //...
-            } else {
-                Toast.makeText(
-                    this,
-                    "画面上のオーバーレイする設定を有効にしてください",
-                    Toast.LENGTH_SHORT
-                ).show()
-                // 許可されていない
-                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"));
-                // 設定画面に移行
-                settingsStartActivityForResult.launch(intent);
+        val cameraScanStartButton = binding.cameraScanStartButton
+        cameraScanStartButton.setOnClickListener { v ->
+            val permissions = mutableListOf<String>(Manifest.permission.CAMERA)
+            // WRITE_EXTERNAL_STORAGEはPie以下で必要
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+            checkAndRequestPermissions(permissions.toTypedArray()) {
+                val intent = Intent(this, CameraScanActivity::class.java)
+                startActivity(intent)
             }
         }
-        */
     }
 
     /**

@@ -8,7 +8,7 @@
         android:id="@+id/recordStartButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="録画開始!!"
+        android:text="QRCodeを画面から読み取る"
         android:layout_centerHorizontal="true"
         android:layout_above="@+id/centerPointer"/>
 
@@ -26,4 +26,11 @@
         android:layout_centerHorizontal="true"
         android:layout_below="@+id/centerPointer" />
 
+    <Button
+        android:id="@+id/cameraScanStartButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="QRCodeをカメラで読み取る"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/recordStopButton" />
 </RelativeLayout>

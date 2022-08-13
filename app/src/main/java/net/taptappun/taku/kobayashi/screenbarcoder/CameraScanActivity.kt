@@ -49,46 +49,18 @@ class CameraScanActivity : AppCompatActivity() {
             override fun surfaceCreated(holder: SurfaceHolder) {
             }
 
-            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+            override fun surfaceChanged(
+                holder: SurfaceHolder,
+                format: Int,
+                width: Int,
+                height: Int
+            ) {
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder) {
             }
         })
-
-        if (allPermissionsGranted()) {
-            // permissionは得られているので、カメラ始動
-            startCamera()
-        } else {
-            // permission許可要求
-            ActivityCompat.requestPermissions(
-                this,
-                REQUIRED_PERMISSIONS,
-                REQUEST_CODE_PERMISSIONS
-            )
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults:
-            IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
-                // カメラ開始処理
-                startCamera()
-            } else {
-                Toast.makeText(
-                    this,
-                    "Permissions not granted by the user.",
-                    Toast.LENGTH_SHORT
-                ).show()
-                finish()
-            }
-        }
+        startCamera()
     }
 
     override fun onDestroy() {
@@ -96,10 +68,6 @@ class CameraScanActivity : AppCompatActivity() {
         for (detector in detectors) {
             detector.release()
         }
-    }
-
-    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
-        ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -124,7 +92,10 @@ class CameraScanActivity : AppCompatActivity() {
                 ImageAnalysis.Analyzer { imageProxy ->
                     val mediaImage = imageProxy.image
                     if (mediaImage != null) {
-                        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                        val image = InputImage.fromMediaImage(
+                            mediaImage,
+                            imageProxy.imageInfo.rotationDegrees
+                        )
                         for (detector in detectors) {
                             detector.detect(image)
                         }
@@ -148,65 +119,50 @@ class CameraScanActivity : AppCompatActivity() {
                 imageAnalysis
             )
         }, ContextCompat.getMainExecutor(this))
-        }
+    }
 
-        /**
-         * Get the angle by which an image must be rotated given the device's current
-         * orientation.
-         */
-        @Throws(CameraAccessException::class)
-        private fun getRotationCompensation(
-            cameraId: String,
-            activity: Activity,
-            isFrontFacing: Boolean
-        ): Int {
-            val orientations = SparseIntArray()
-            orientations.append(Surface.ROTATION_0, 0)
-            orientations.append(Surface.ROTATION_90, 90)
-            orientations.append(Surface.ROTATION_180, 180)
-            orientations.append(Surface.ROTATION_270, 270)
-            // Get the device's current rotation relative to its "native" orientation.
-            // Then, from the ORIENTATIONS table, look up the angle the image must be
-            // rotated to compensate for the device's rotation.
-            val deviceRotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                if (this.display == null) {
-                    0
-                } else {
-                    this.display!!.rotation
-                }
+    /**
+     * Get the angle by which an image must be rotated given the device's current
+     * orientation.
+     */
+    @Throws(CameraAccessException::class)
+    private fun getRotationCompensation(
+        cameraId: String,
+        activity: Activity,
+        isFrontFacing: Boolean
+    ): Int {
+        val orientations = SparseIntArray()
+        orientations.append(Surface.ROTATION_0, 0)
+        orientations.append(Surface.ROTATION_90, 90)
+        orientations.append(Surface.ROTATION_180, 180)
+        orientations.append(Surface.ROTATION_270, 270)
+        // Get the device's current rotation relative to its "native" orientation.
+        // Then, from the ORIENTATIONS table, look up the angle the image must be
+        // rotated to compensate for the device's rotation.
+        val deviceRotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (this.display == null) {
+                0
             } else {
-                this.windowManager.defaultDisplay.rotation
+                this.display!!.rotation
             }
-            var rotationCompensation = orientations.get(deviceRotation)
-
-            // Get the device's sensor orientation.
-            val cameraManager = activity.getSystemService(CAMERA_SERVICE) as CameraManager
-            val sensorOrientation = cameraManager
-                .getCameraCharacteristics(cameraId)
-                .get(CameraCharacteristics.SENSOR_ORIENTATION)!!
-
-            if (isFrontFacing) {
-                rotationCompensation = (sensorOrientation + rotationCompensation) % 360
-            } else { // back-facing
-                rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360
-            }
-            return rotationCompensation
+        } else {
+            this.windowManager.defaultDisplay.rotation
         }
+        var rotationCompensation = orientations.get(deviceRotation)
 
-    companion object {
-        private const val REQUEST_CODE_PERMISSIONS = 10
-        // 必要なpermissionのリスト
-        private val REQUIRED_PERMISSIONS =
-            mutableListOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO
-            ).apply {
-                // WRITE_EXTERNAL_STORAGEはPie以下で必要
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                    add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
-            }.toTypedArray()
+        // Get the device's sensor orientation.
+        val cameraManager = activity.getSystemService(CAMERA_SERVICE) as CameraManager
+        val sensorOrientation = cameraManager
+            .getCameraCharacteristics(cameraId)
+            .get(CameraCharacteristics.SENSOR_ORIENTATION)!!
+
+        if (isFrontFacing) {
+            rotationCompensation = (sensorOrientation + rotationCompensation) % 360
+        } else { // back-facing
+            rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360
+        }
+        return rotationCompensation
     }
-    }
+}
 
     
