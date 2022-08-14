@@ -34,7 +34,7 @@ abstract class ImageDetector<T> {
     }
 
     abstract fun detect(image: InputImage)
-    protected abstract fun renderDetectMarks(detects: MutableList<T>)
+    protected abstract fun renderDetectMarks(detects: MutableList<T>, inputImage: InputImage)
 
     protected fun refreshRenderMarkedCanvas(): Canvas {
         clear()

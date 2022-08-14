@@ -1,13 +1,42 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.app.Activity
+import android.graphics.*
+import android.media.Image
 import android.os.Build
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
 
 class Util {
     companion object {
+        fun convertYuvImageToJpegBitmap(image: Image): Bitmap {
+            val planes = image.planes
+            val yBuffer: ByteBuffer = planes[0].buffer
+            val uBuffer: ByteBuffer = planes[1].buffer
+            val vBuffer: ByteBuffer = planes[2].buffer
+            val ySize: Int = yBuffer.remaining()
+            val uSize: Int = uBuffer.remaining()
+            val vSize: Int = vBuffer.remaining()
+            val nv21 = ByteArray(ySize + uSize + vSize)
+            yBuffer.get(nv21, 0, ySize)
+            vBuffer.get(nv21, ySize, vSize)
+            uBuffer.get(nv21, ySize + vSize, uSize)
+            val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null)
+            val out = ByteArrayOutputStream()
+            yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 100, out)
+            val imageBytes: ByteArray = out.toByteArray()
+            return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, null)
+        }
+
+        fun RotateBitmap(source: Bitmap, angle: Float): Bitmap {
+            val matrix = Matrix()
+            matrix.postRotate(angle)
+            return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+        }
+
         // ナビゲーションバーとステータスバーを隠したフルスクリーンモードにする処理
         fun requestFullScreenMode(activity: Activity) {
             if (Build.VERSION.SDK_INT < 30) {

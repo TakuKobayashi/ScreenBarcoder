@@ -2,8 +2,7 @@ package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.Paint
-import android.graphics.PixelFormat
+import android.graphics.*
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -25,6 +24,8 @@ import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import net.taptappun.taku.kobayashi.screenbarcoder.databinding.ActivityCameraScanBinding
+import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
 
 class CameraScanActivity : AppCompatActivity() {
 
@@ -199,22 +200,30 @@ class CameraScanActivity : AppCompatActivity() {
     private fun buildImageAnalysis(): ImageAnalysis {
         val imageAnalysis = ImageAnalysis.Builder()
             // enable the following line if RGBA output is needed.
-            // .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+            .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+            //.setOutputImageRotationEnabled(true)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
 //            imageAnalysis.targetRotation
         imageAnalysis.setAnalyzer(
             imageAnalysisExecutor,
             ImageAnalysis.Analyzer { imageProxy ->
-                //Log.d(ScreenScanCommonActivity.TAG, "imageProxyWidth:${imageProxy.width} imageProxyHeight:${imageProxy.height}")
                 val mediaImage = imageProxy.image
                 if (mediaImage != null) {
-                    //Log.d(ScreenScanCommonActivity.TAG, "mediaImageWidth:${mediaImage.width} mediaImageHeight:${mediaImage.height}")
                     val image = InputImage.fromMediaImage(
                         mediaImage,
                         imageProxy.imageInfo.rotationDegrees
                     )
                     for (detector in detectors) {
+                        /*
+                        // mediaImageの内容を画面に表示するようにした処理
+                        val markingCanvas = detector.refreshRenderMarkedCanvas()
+                        if(mediaImage.planes != null){
+                            val bitmapImage = Util.convertYuvImageToJpegBitmap(mediaImage)
+                            markingCanvas.drawBitmap(Util.RotateBitmap(bitmapImage, image.rotationDegrees.toFloat()), 0f, 0f, null)
+                            bitmapImage.recycle()
+                        }
+                        */
                         detector.detect(image)
                     }
                 }

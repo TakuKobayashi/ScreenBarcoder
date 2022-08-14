@@ -28,12 +28,12 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
 //        val scanner = BarcodeScanning.getClient(options)
         // [END get_detector]
         // [START run_detector]
-        scanner.process(image).addOnSuccessListener { barcodes -> renderDetectMarks(barcodes) }.addOnFailureListener { e ->
+        scanner.process(image).addOnSuccessListener { barcodes -> renderDetectMarks(barcodes, image) }.addOnFailureListener { e ->
             // Task failed with an exception
         }
     }
 
-    override fun renderDetectMarks(detects: MutableList<Barcode>) {
+    override fun renderDetectMarks(detects: MutableList<Barcode>, inputImage: InputImage) {
         Log.d(ScreenScanCommonActivity.TAG, "scan!!")
         val markingCanvas = refreshRenderMarkedCanvas()
 
