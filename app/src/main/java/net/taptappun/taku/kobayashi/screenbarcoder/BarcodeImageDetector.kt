@@ -65,7 +65,7 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
         val bounds = barcode.boundingBox
         val corners = barcode.cornerPoints
         val rawValue = barcode.rawValue
-        Log.d(ScreenScanCommonActivity.TAG, "canvas:$markingRenderCanvas barCodeBounds:$bounds barCodeRawValue:$rawValue barcodeCornersCount:$corners")
+        Log.d(ScreenScanCommonActivity.TAG, "canvas:$markingRenderCanvas barCodeBounds:$bounds barCodeRawValue:$rawValue")
         if (bounds != null) {
             val barcodeRectPaint = Paint()
             // #66cdaa: mediumaquamarine

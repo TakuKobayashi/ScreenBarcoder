@@ -2,16 +2,13 @@ package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PixelFormat
-import android.graphics.Rect
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
@@ -52,7 +49,7 @@ class CameraScanActivity : AppCompatActivity() {
         val holder = binding.overlaySurfaceView.holder
         // OverlayしているSUrfaceViewの背景を透過させないとカメラ画面が表示されない
         // SurfaceHolder.setFormat(PixelFormat.TRANSLUCENT)は背景を透過する設定
-        holder.setFormat(PixelFormat.TRANSLUCENT);
+        holder.setFormat(PixelFormat.TRANSLUCENT)
         holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 surfaceHolder = holder
