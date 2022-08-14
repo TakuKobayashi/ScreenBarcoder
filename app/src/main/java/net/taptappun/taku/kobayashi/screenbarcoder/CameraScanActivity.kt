@@ -9,8 +9,10 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
+import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.SurfaceHolder
 import androidx.appcompat.app.AppCompatActivity
@@ -35,6 +37,8 @@ class CameraScanActivity : AppCompatActivity() {
     private var surfaceViewThread: Thread? = null
     private var isSurfaceRendering = false
     private var surfaceHolder: SurfaceHolder? = null
+    private var imageAnalysis: ImageAnalysis? = null
+    private var cameraPreview: Preview? = null
     private lateinit var binding: ActivityCameraScanBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +70,7 @@ class CameraScanActivity : AppCompatActivity() {
                 surfaceHolder = holder
                 startRenderThread()
                 startCamera()
+                Log.d(ScreenScanCommonActivity.TAG, "surfaceChangedWidth:${width} surfaceChangedHeight:${height}")
                 for (detector in detectors) {
                     detector.initRenderBitmap(Size(width, height))
                 }
@@ -80,6 +85,14 @@ class CameraScanActivity : AppCompatActivity() {
                 surfaceViewThread = null
             }
         })
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            //Util.requestFullScreenMode(this)
+        }
+        Log.d(ScreenScanCommonActivity.TAG, "WindowWidth:${binding.overlaySurfaceView.width} WindowHeight:${binding.overlaySurfaceView.height}")
     }
 
     private fun startRenderThread() {
@@ -113,6 +126,7 @@ class CameraScanActivity : AppCompatActivity() {
         isSurfaceRendering = true
         startRenderThread()
         startCamera()
+        orientationEventListener.enable()
     }
 
     override fun onPause() {
@@ -120,6 +134,7 @@ class CameraScanActivity : AppCompatActivity() {
         isSurfaceRendering = false
         surfaceViewThread = null
         unbindAllCamera()
+        orientationEventListener.disable()
     }
 
     override fun onDestroy() {
@@ -132,7 +147,26 @@ class CameraScanActivity : AppCompatActivity() {
         releaseCamera()
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
+    private val orientationEventListener by lazy {
+        object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation < 0) {
+                    return
+                }
+
+                val rotation = when (orientation % 360) {
+                    in 45 until 135 -> Surface.ROTATION_270
+                    in 135 until 225 -> Surface.ROTATION_180
+                    in 225 until 315 -> Surface.ROTATION_90
+                    else -> Surface.ROTATION_0
+                }
+
+                imageAnalysis?.targetRotation = rotation
+                cameraPreview?.targetRotation = rotation
+            }
+        }
+    }
+
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
@@ -141,30 +175,11 @@ class CameraScanActivity : AppCompatActivity() {
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
             // PreviewのUseCase
-            val preview = Preview.Builder().build()
-            preview.setSurfaceProvider(binding.cameraPreview.surfaceProvider)
+            cameraPreview = Preview.Builder().build()
+            cameraPreview?.setSurfaceProvider(binding.cameraPreview.surfaceProvider)
+            Log.d(ScreenScanCommonActivity.TAG, "previewWidth:${binding.cameraPreview.width} previewHeight:${binding.cameraPreview.height}")
 
-            val imageAnalysis = ImageAnalysis.Builder()
-                // enable the following line if RGBA output is needed.
-                // .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-            imageAnalysis.setAnalyzer(
-                imageAnalysisExecutor,
-                ImageAnalysis.Analyzer { imageProxy ->
-                    val mediaImage = imageProxy.image
-                    if (mediaImage != null) {
-                        val image = InputImage.fromMediaImage(
-                            mediaImage,
-                            imageProxy.imageInfo.rotationDegrees
-                        )
-                        for (detector in detectors) {
-                            detector.detect(image)
-                        }
-                    }
-                    imageProxy.close()
-                }
-            )
+            imageAnalysis = buildImageAnalysis()
 
             // アウトカメラを設定
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -174,69 +189,55 @@ class CameraScanActivity : AppCompatActivity() {
             cameraProvider.bindToLifecycle(
                 this,
                 cameraSelector,
-                preview,
+                cameraPreview,
                 imageAnalysis
             )
         }, ContextCompat.getMainExecutor(this))
-        }
-
-        private fun unbindAllCamera() {
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-            cameraProvider.unbindAll()
-            cameraProviderFuture.cancel(true)
-        }
-
-        @SuppressLint("RestrictedApi")
-        private fun releaseCamera() {
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-            cameraProvider.unbindAll()
-            cameraProviderFuture.cancel(true)
-            cameraProvider.shutdown()
-        }
-
-        /**
-         * Get the angle by which an image must be rotated given the device's current
-         * orientation.
-         */
-        @Throws(CameraAccessException::class)
-        private fun getRotationCompensation(
-            cameraId: String,
-            activity: Activity,
-            isFrontFacing: Boolean
-        ): Int {
-            val orientations = SparseIntArray()
-            orientations.append(Surface.ROTATION_0, 0)
-            orientations.append(Surface.ROTATION_90, 90)
-            orientations.append(Surface.ROTATION_180, 180)
-            orientations.append(Surface.ROTATION_270, 270)
-            // Get the device's current rotation relative to its "native" orientation.
-            // Then, from the ORIENTATIONS table, look up the angle the image must be
-            // rotated to compensate for the device's rotation.
-            val deviceRotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                if (this.display == null) {
-                    0
-                } else {
-                    this.display!!.rotation
-                }
-            } else {
-                this.windowManager.defaultDisplay.rotation
-            }
-            var rotationCompensation = orientations.get(deviceRotation)
-
-            // Get the device's sensor orientation.
-            val cameraManager = activity.getSystemService(CAMERA_SERVICE) as CameraManager
-            val sensorOrientation = cameraManager
-                .getCameraCharacteristics(cameraId)
-                .get(CameraCharacteristics.SENSOR_ORIENTATION)!!
-
-            if (isFrontFacing) {
-                rotationCompensation = (sensorOrientation + rotationCompensation) % 360
-            } else { // back-facing
-                rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360
-            }
-            return rotationCompensation
-        }
     }
+
+    @SuppressLint("UnsafeOptInUsageError")
+    private fun buildImageAnalysis(): ImageAnalysis {
+        val imageAnalysis = ImageAnalysis.Builder()
+            // enable the following line if RGBA output is needed.
+            // .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+//            imageAnalysis.targetRotation
+        imageAnalysis.setAnalyzer(
+            imageAnalysisExecutor,
+            ImageAnalysis.Analyzer { imageProxy ->
+                //Log.d(ScreenScanCommonActivity.TAG, "imageProxyWidth:${imageProxy.width} imageProxyHeight:${imageProxy.height}")
+                val mediaImage = imageProxy.image
+                if (mediaImage != null) {
+                    //Log.d(ScreenScanCommonActivity.TAG, "mediaImageWidth:${mediaImage.width} mediaImageHeight:${mediaImage.height}")
+                    val image = InputImage.fromMediaImage(
+                        mediaImage,
+                        imageProxy.imageInfo.rotationDegrees
+                    )
+                    for (detector in detectors) {
+                        detector.detect(image)
+                    }
+                }
+                imageProxy.close()
+            }
+        )
+        return imageAnalysis
+    }
+
+    private fun unbindAllCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+        cameraProvider.unbindAll()
+        cameraProviderFuture.cancel(true)
+    }
+
+    @SuppressLint("RestrictedApi")
+    private fun releaseCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+        cameraProvider.unbindAll()
+        cameraProviderFuture.cancel(true)
+        cameraProvider.shutdown()
+    }
+}
     
