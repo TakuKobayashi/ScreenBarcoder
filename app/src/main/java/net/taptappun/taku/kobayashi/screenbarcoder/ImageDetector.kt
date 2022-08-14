@@ -36,7 +36,7 @@ abstract class ImageDetector<T> {
     abstract fun detect(image: InputImage)
     protected abstract fun renderDetectMarks(detects: MutableList<T>, inputImage: InputImage)
 
-    protected fun refreshRenderMarkedCanvas(): Canvas {
+    public fun refreshRenderMarkedCanvas(): Canvas {
         clear()
         val canvas = if (markingBitmap == null) {
             Canvas()
@@ -44,5 +44,19 @@ abstract class ImageDetector<T> {
             Canvas(markingBitmap!!)
         }
         return canvas
+    }
+
+    protected fun calcScaleFactorX(inputImageWidth: Int): Float{
+        if (markingBitmap != null) {
+            return markingBitmap!!.width.toFloat() / inputImageWidth.toFloat()
+        }
+        return 1f
+    }
+
+    protected fun calcScaleFactorY(inputImageHeight: Int): Float{
+        if (markingBitmap != null) {
+            return markingBitmap!!.height.toFloat() / inputImageHeight.toFloat()
+        }
+        return 1f
     }
 }

@@ -2,7 +2,10 @@ package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PixelFormat
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -204,7 +207,6 @@ class CameraScanActivity : AppCompatActivity() {
             //.setOutputImageRotationEnabled(true)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-//            imageAnalysis.targetRotation
         imageAnalysis.setAnalyzer(
             imageAnalysisExecutor,
             ImageAnalysis.Analyzer { imageProxy ->
@@ -220,7 +222,7 @@ class CameraScanActivity : AppCompatActivity() {
                         val markingCanvas = detector.refreshRenderMarkedCanvas()
                         if(mediaImage.planes != null){
                             val bitmapImage = Util.convertYuvImageToJpegBitmap(mediaImage)
-                            markingCanvas.drawBitmap(Util.RotateBitmap(bitmapImage, image.rotationDegrees.toFloat()), 0f, 0f, null)
+                            markingCanvas.drawBitmap(Util.rotateBitmap(bitmapImage, image.rotationDegrees.toFloat()), 0f, 0f, null)
                             bitmapImage.recycle()
                         }
                         */

@@ -7,6 +7,7 @@ import android.os.Build
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import androidx.core.graphics.toRect
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
@@ -31,7 +32,15 @@ class Util {
             return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size, null)
         }
 
-        fun RotateBitmap(source: Bitmap, angle: Float): Bitmap {
+        // https://gist.github.com/kwmt/60964abd7eecbf0dc384c441abab0912
+        fun rotateRect(source: RectF, degree: Float): Rect {
+            val matrix = Matrix()
+            matrix.setRotate(degree, source.centerX(), source.centerY())
+            matrix.mapRect(source)
+            return source.toRect()
+        }
+
+        fun rotateBitmap(source: Bitmap, angle: Float): Bitmap {
             val matrix = Matrix()
             matrix.postRotate(angle)
             return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
