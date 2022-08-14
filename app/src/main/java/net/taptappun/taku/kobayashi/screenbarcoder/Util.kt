@@ -1,6 +1,7 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
@@ -13,6 +14,8 @@ import android.os.Build
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.view.Surface
+import android.view.Display
 import androidx.core.graphics.toRect
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -50,6 +53,37 @@ class Util {
             val matrix = Matrix()
             matrix.postRotate(angle)
             return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+        }
+
+        // アプリ起動中は画面が回転しないようにLockする設置
+        fun screenOrientationToLock(activity: Activity) {
+            if (Build.VERSION.SDK_INT < 18) {
+                when (Util.getDisplayOrientation(activity)) {
+                    Surface.ROTATION_0 -> activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    Surface.ROTATION_90 -> activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    Surface.ROTATION_180 -> activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
+                    Surface.ROTATION_270 -> activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+                }
+            } else {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LOCKED
+            }
+        }
+
+        private fun getDisplayOrientation(act: Activity): Int {
+            val display = getDisplay(act)
+            return if (display != null) {
+                display.rotation
+            } else {
+                Surface.ROTATION_0
+            }
+        }
+
+        private fun getDisplay(act: Activity): Display? {
+            return if (Build.VERSION.SDK_INT < 30) {
+                act.windowManager.defaultDisplay
+            } else {
+                act.display
+            }
         }
 
         // ナビゲーションバーとステータスバーを隠したフルスクリーンモードにする処理

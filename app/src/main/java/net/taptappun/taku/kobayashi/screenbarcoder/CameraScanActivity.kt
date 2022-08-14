@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.OrientationEventListener
 import android.view.Surface
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -26,14 +27,20 @@ class CameraScanActivity : AppCompatActivity() {
     private var imageAnalysis: ImageAnalysis? = null
     private var cameraPreview: Preview? = null
     private lateinit var binding: ActivityCameraScanBinding
+    private lateinit var detectMarkingSurfaceView: DetectMarkingSurfaceView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityCameraScanBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // スリープにさせない設定
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // アプリ起動中は画面は回転しない設定
+        Util.screenOrientationToLock(this)
+        detectMarkingSurfaceView = binding.overlaySurfaceView
         for(detector in detectors){
-            binding.overlaySurfaceView.setDetectors(detector)
+            detectMarkingSurfaceView.setDetectors(detector)
         }
     }
 
@@ -46,21 +53,21 @@ class CameraScanActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        binding.overlaySurfaceView.startRenderThread()
+        detectMarkingSurfaceView.startRenderThread()
         startCamera()
         orientationEventListener.enable()
     }
 
     override fun onPause() {
         super.onPause()
-        binding.overlaySurfaceView.stopRenderThread()
+        detectMarkingSurfaceView.stopRenderThread()
         unbindAllCamera()
         orientationEventListener.disable()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        binding.overlaySurfaceView.stopRenderThread()
+        detectMarkingSurfaceView.stopRenderThread()
         for (detector in detectors) {
             detector.release()
         }
