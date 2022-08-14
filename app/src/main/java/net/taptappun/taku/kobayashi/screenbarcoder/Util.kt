@@ -1,7 +1,13 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.app.Activity
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageFormat
+import android.graphics.Matrix
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.YuvImage
 import android.media.Image
 import android.os.Build
 import android.view.View
@@ -75,7 +81,8 @@ class Util {
                 decorView.systemUiVisibility = systemUiVisibilityFlags
             } else {
                 activity.window.insetsController?.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                activity.window.insetsController?.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                activity.window.insetsController?.systemBarsBehavior =
+                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             }
         }
     }

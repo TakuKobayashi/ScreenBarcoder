@@ -1,19 +1,11 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PixelFormat
-import android.hardware.camera2.CameraAccessException
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.util.Size
-import android.util.SparseIntArray
 import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -27,8 +19,6 @@ import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import net.taptappun.taku.kobayashi.screenbarcoder.databinding.ActivityCameraScanBinding
-import java.io.ByteArrayOutputStream
-import java.nio.ByteBuffer
 
 class CameraScanActivity : AppCompatActivity() {
 
@@ -74,7 +64,7 @@ class CameraScanActivity : AppCompatActivity() {
                 surfaceHolder = holder
                 startRenderThread()
                 startCamera()
-                Log.d(ScreenScanCommonActivity.TAG, "surfaceChangedWidth:${width} surfaceChangedHeight:${height}")
+                Log.d(ScreenScanCommonActivity.TAG, "surfaceChangedWidth:$width surfaceChangedHeight:$height")
                 for (detector in detectors) {
                     detector.initRenderBitmap(Size(width, height))
                 }
@@ -94,9 +84,8 @@ class CameraScanActivity : AppCompatActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            //Util.requestFullScreenMode(this)
+            // Util.requestFullScreenMode(this)
         }
-        Log.d(ScreenScanCommonActivity.TAG, "WindowWidth:${binding.overlaySurfaceView.width} WindowHeight:${binding.overlaySurfaceView.height}")
     }
 
     private fun startRenderThread() {
@@ -181,7 +170,6 @@ class CameraScanActivity : AppCompatActivity() {
             // PreviewのUseCase
             cameraPreview = Preview.Builder().build()
             cameraPreview?.setSurfaceProvider(binding.cameraPreview.surfaceProvider)
-            Log.d(ScreenScanCommonActivity.TAG, "previewWidth:${binding.cameraPreview.width} previewHeight:${binding.cameraPreview.height}")
 
             imageAnalysis = buildImageAnalysis()
 
@@ -204,7 +192,7 @@ class CameraScanActivity : AppCompatActivity() {
         val imageAnalysis = ImageAnalysis.Builder()
             // enable the following line if RGBA output is needed.
             .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
-            //.setOutputImageRotationEnabled(true)
+            // .setOutputImageRotationEnabled(true)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
         imageAnalysis.setAnalyzer(
@@ -251,4 +239,3 @@ class CameraScanActivity : AppCompatActivity() {
         cameraProvider.shutdown()
     }
 }
-    

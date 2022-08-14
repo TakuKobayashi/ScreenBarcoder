@@ -29,9 +29,12 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
 //        val scanner = BarcodeScanning.getClient(options)
         // [END get_detector]
         // [START run_detector]
-        scanner.process(image).addOnSuccessListener { barcodes -> renderDetectMarks(barcodes, image) }.addOnFailureListener { e ->
-            // Task failed with an exception
-        }
+        scanner
+            .process(image)
+            .addOnSuccessListener { barcodes -> renderDetectMarks(barcodes, image) }
+            .addOnFailureListener { e ->
+                // Task failed with an exception
+            }
     }
 
     override fun renderDetectMarks(detects: MutableList<Barcode>, inputImage: InputImage) {
@@ -65,7 +68,10 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
     private fun renderMarkings(markingRenderCanvas: Canvas, barcode: Barcode, inputImage: InputImage) {
         val bounds = barcode.boundingBox
         val rawValue = barcode.rawValue
-        val rotateInputImageRect = Util.rotateRect(RectF(0f,0f,inputImage.width.toFloat(),inputImage.height.toFloat()), inputImage.rotationDegrees.toFloat())
+        val rotateInputImageRect = Util.rotateRect(
+            RectF(0f, 0f, inputImage.width.toFloat(), inputImage.height.toFloat()),
+            inputImage.rotationDegrees.toFloat()
+        )
         val rotateBounds = Util.rotateRect(RectF(bounds), inputImage.rotationDegrees.toFloat())
         val scaleFactorX = calcScaleFactorX(rotateInputImageRect.width())
         val scaleFactorY = calcScaleFactorY(rotateInputImageRect.height())
@@ -74,7 +80,7 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
         drawBound.top *= scaleFactorY
         drawBound.right *= scaleFactorX
         drawBound.bottom *= scaleFactorY
-        //Log.d(ScreenScanCommonActivity.TAG, "bounds:$bounds rotateBounds:$rotateBounds drawBound:$drawBound")
+        // Log.d(ScreenScanCommonActivity.TAG, "bounds:$bounds rotateBounds:$rotateBounds drawBound:$drawBound")
         if (bounds != null) {
             val barcodeRectPaint = Paint()
             // #66cdaa: mediumaquamarine

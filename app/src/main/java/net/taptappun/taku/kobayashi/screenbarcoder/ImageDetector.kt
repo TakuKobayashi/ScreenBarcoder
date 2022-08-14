@@ -46,14 +46,14 @@ abstract class ImageDetector<T> {
         return canvas
     }
 
-    protected fun calcScaleFactorX(inputImageWidth: Int): Float{
+    protected fun calcScaleFactorX(inputImageWidth: Int): Float {
         if (markingBitmap != null) {
             return markingBitmap!!.width.toFloat() / inputImageWidth.toFloat()
         }
         return 1f
     }
 
-    protected fun calcScaleFactorY(inputImageHeight: Int): Float{
+    protected fun calcScaleFactorY(inputImageHeight: Int): Float {
         if (markingBitmap != null) {
             return markingBitmap!!.height.toFloat() / inputImageHeight.toFloat()
         }
