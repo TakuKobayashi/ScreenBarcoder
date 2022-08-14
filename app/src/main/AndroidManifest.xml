@@ -19,7 +19,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ScreenBarcoder"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
         tools:targetApi="31"
         android:banner="@drawable/app_icon_your_company">
 
