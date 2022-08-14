@@ -1,14 +1,9 @@
 package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.annotation.SuppressLint
-import android.graphics.Paint
-import android.graphics.PixelFormat
 import android.os.Bundle
-import android.util.Log
-import android.util.Size
 import android.view.OrientationEventListener
 import android.view.Surface
-import android.view.SurfaceHolder
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -28,9 +23,6 @@ class CameraScanActivity : AppCompatActivity() {
     private val detectors = setOf(
         BarcodeImageDetector(),
     )
-    private var surfaceViewThread: Thread? = null
-    private var isSurfaceRendering = false
-    private var surfaceHolder: SurfaceHolder? = null
     private var imageAnalysis: ImageAnalysis? = null
     private var cameraPreview: Preview? = null
     private lateinit var binding: ActivityCameraScanBinding
@@ -40,45 +32,9 @@ class CameraScanActivity : AppCompatActivity() {
 
         binding = ActivityCameraScanBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        // Cameraの上にOverlayさせるためにはSurfaceView.setZOrderMediaOverlay(true)が必要
-        // 参考: https://stackoverflow.com/questions/2933882/how-to-draw-an-overlay-on-a-surfaceview-used-by-camera-on-android
-        binding.overlaySurfaceView.setZOrderMediaOverlay(true)
-        val holder = binding.overlaySurfaceView.holder
-        // OverlayしているSUrfaceViewの背景を透過させないとカメラ画面が表示されない
-        // SurfaceHolder.setFormat(PixelFormat.TRANSLUCENT)は背景を透過する設定
-        holder.setFormat(PixelFormat.TRANSLUCENT)
-        holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
-                surfaceHolder = holder
-                startRenderThread()
-                startCamera()
-            }
-
-            override fun surfaceChanged(
-                holder: SurfaceHolder,
-                format: Int,
-                width: Int,
-                height: Int
-            ) {
-                surfaceHolder = holder
-                startRenderThread()
-                startCamera()
-                Log.d(ScreenScanCommonActivity.TAG, "surfaceChangedWidth:$width surfaceChangedHeight:$height")
-                for (detector in detectors) {
-                    detector.initRenderBitmap(Size(width, height))
-                }
-            }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                unbindAllCamera()
-                for (detector in detectors) {
-                    detector.release()
-                }
-                isSurfaceRendering = false
-                surfaceViewThread = null
-            }
-        })
+        for(detector in detectors){
+            binding.overlaySurfaceView.setDetectors(detector)
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -88,52 +44,23 @@ class CameraScanActivity : AppCompatActivity() {
         }
     }
 
-    private fun startRenderThread() {
-        isSurfaceRendering = true
-        if (surfaceViewThread != null) {
-            return
-        }
-        surfaceViewThread = Thread {
-            while (isSurfaceRendering) {
-                val canvas = surfaceHolder?.lockCanvas()
-                if (canvas != null) {
-//                    val paint = Paint()
-//                    paint.color = Color.RED
-//                    canvas.drawRect(Rect(canvas.width / 2 - 100, canvas.height / 2 - 100, canvas.width / 2 + 100, canvas.height / 2 + 100), paint)
-                    for (detector in detectors) {
-                        val paint = Paint()
-                        val renderMarkedBitmap = detector.renderMarkedBitmap()
-                        if (renderMarkedBitmap != null) {
-                            canvas.drawBitmap(renderMarkedBitmap, 0f, 0f, paint)
-                        }
-                    }
-                    surfaceHolder?.unlockCanvasAndPost(canvas)
-                }
-            }
-        }
-        surfaceViewThread?.start()
-    }
-
     override fun onResume() {
         super.onResume()
-        isSurfaceRendering = true
-        startRenderThread()
+        binding.overlaySurfaceView.startRenderThread()
         startCamera()
         orientationEventListener.enable()
     }
 
     override fun onPause() {
         super.onPause()
-        isSurfaceRendering = false
-        surfaceViewThread = null
+        binding.overlaySurfaceView.stopRenderThread()
         unbindAllCamera()
         orientationEventListener.disable()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        isSurfaceRendering = false
-        surfaceViewThread = null
+        binding.overlaySurfaceView.stopRenderThread()
         for (detector in detectors) {
             detector.release()
         }

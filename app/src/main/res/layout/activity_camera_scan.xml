@@ -16,7 +16,7 @@
         app:layout_constraintTop_toTopOf="parent"/>
 
     <!-- 後に記述した方が前面に表示される -->
-    <SurfaceView
+    <net.taptappun.taku.kobayashi.screenbarcoder.DetectMarkingSurfaceView
         android:id="@+id/overlaySurfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
