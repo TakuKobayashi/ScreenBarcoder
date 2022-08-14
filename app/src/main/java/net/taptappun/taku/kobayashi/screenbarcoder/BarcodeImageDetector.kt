@@ -27,7 +27,6 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
         // Or, to specify the formats to recognize:
 //        val scanner = BarcodeScanning.getClient(options)
         // [END get_detector]
-        Log.d(ScreenScanCommonActivity.TAG, "lets Scan!!")
         // [START run_detector]
         scanner.process(image).addOnSuccessListener { barcodes -> renderDetectMarks(barcodes) }.addOnFailureListener { e ->
             // Task failed with an exception
@@ -36,22 +35,14 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
 
     override fun renderDetectMarks(detects: MutableList<Barcode>) {
         Log.d(ScreenScanCommonActivity.TAG, "scan!!")
-        refreshRenderMarkedCanvas()
-        // Task completed successfully
-        // [START_EXCLUDE]
-        // [START get_barcodes]
-        val markingCanvas = if (markingBitmap != null && markingBitmap!!.isRecycled) {
-            Canvas(markingBitmap!!)
-        } else {
-            null
-        }
+        val markingCanvas = refreshRenderMarkedCanvas()
 
         for (barcode in detects) {
             val bounds = barcode.boundingBox
             val corners = barcode.cornerPoints
             val rawValue = barcode.rawValue
             val valueType = barcode.valueType
-            Log.d(ScreenScanCommonActivity.TAG, "barCodeBounds:$bounds barCodeRawValue:$rawValue barcodeValueType:$valueType barcodeCornersCount:$corners")
+//            Log.d(ScreenScanCommonActivity.TAG, "barCodeBounds:$bounds barCodeRawValue:$rawValue barcodeValueType:$valueType barcodeCornersCount:$corners")
             when (valueType) {
                 Barcode.TYPE_WIFI -> {
                     val ssid = barcode.wifi!!.ssid
@@ -74,6 +65,7 @@ class BarcodeImageDetector : ImageDetector<Barcode>() {
         val bounds = barcode.boundingBox
         val corners = barcode.cornerPoints
         val rawValue = barcode.rawValue
+        Log.d(ScreenScanCommonActivity.TAG, "canvas:$markingRenderCanvas barCodeBounds:$bounds barCodeRawValue:$rawValue barcodeCornersCount:$corners")
         if (bounds != null) {
             val barcodeRectPaint = Paint()
             // #66cdaa: mediumaquamarine

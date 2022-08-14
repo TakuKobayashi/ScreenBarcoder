@@ -2,7 +2,10 @@ package net.taptappun.taku.kobayashi.screenbarcoder
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -43,7 +46,13 @@ class CameraScanActivity : AppCompatActivity() {
         binding = ActivityCameraScanBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Cameraの上にOverlayさせるためにはSurfaceView.setZOrderMediaOverlay(true)が必要
+        // 参考: https://stackoverflow.com/questions/2933882/how-to-draw-an-overlay-on-a-surfaceview-used-by-camera-on-android
+        binding.overlaySurfaceView.setZOrderMediaOverlay(true)
         val holder = binding.overlaySurfaceView.holder
+        // OverlayしているSUrfaceViewの背景を透過させないとカメラ画面が表示されない
+        // SurfaceHolder.setFormat(PixelFormat.TRANSLUCENT)は背景を透過する設定
+        holder.setFormat(PixelFormat.TRANSLUCENT);
         holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
                 surfaceHolder = holder
@@ -83,9 +92,11 @@ class CameraScanActivity : AppCompatActivity() {
         }
         surfaceViewThread = Thread {
             while (isSurfaceRendering) {
-                Log.d(ScreenScanCommonActivity.TAG, "Surface!!")
                 val canvas = surfaceHolder?.lockCanvas()
                 if (canvas != null) {
+//                    val paint = Paint()
+//                    paint.color = Color.RED
+//                    canvas.drawRect(Rect(canvas.width / 2 - 100, canvas.height / 2 - 100, canvas.width / 2 + 100, canvas.height / 2 + 100), paint)
                     for (detector in detectors) {
                         val paint = Paint()
                         val renderMarkedBitmap = detector.renderMarkedBitmap()
@@ -144,7 +155,6 @@ class CameraScanActivity : AppCompatActivity() {
             imageAnalysis.setAnalyzer(
                 imageAnalysisExecutor,
                 ImageAnalysis.Analyzer { imageProxy ->
-                    Log.d(ScreenScanCommonActivity.TAG, "image!!")
                     val mediaImage = imageProxy.image
                     if (mediaImage != null) {
                         val image = InputImage.fromMediaImage(
